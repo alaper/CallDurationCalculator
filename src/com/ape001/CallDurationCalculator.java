@@ -11,7 +11,21 @@ public class CallDurationCalculator {
 	private int peakSeconds;
 	private int offPeakSeconds;
 	private Interval callTime;
+
+	public void setCall(DateTime callStart, DateTime callEnd) throws Exception
+	{
+		if (callEnd.isBefore(callStart))
+			throw new Exception("CallEnd cannot be before CallStart");
 		
+		if (new Interval(callStart, callEnd).toDurationMillis() > 86400000)
+			throw new Exception("Call cannot exceed 24 hours");
+		
+		this.callStart = callStart;
+		this.callEnd = callEnd;
+		callTime = new Interval(callStart, callEnd);
+		
+	}
+	
 	public void setPeakStart(int hour, int minute)
 	{
 		peakStart = new LocalTime(hour, minute);
@@ -116,9 +130,10 @@ public class CallDurationCalculator {
 		callDurCalc.setPeakStart(9, 0);
 		callDurCalc.setPeakEnd(17, 0);
 		
-			
-		callDurCalc.setCallStart(new DateTime(2013,02,10,8,0,0));
-		callDurCalc.setCallEnd(new DateTime(2013,02,11,6,40,0));
+		try	
+		{callDurCalc.setCall(new DateTime(2013,02,10,8,0,0),new DateTime(2013,02,11,10,40,0));}
+		catch (Exception e)
+		{System.out.println(e.getMessage());}
 		
 		System.out.println("Peak Seconds: " + callDurCalc.calcPeakSeconds());
 		System.out.println("OffPeak Seconds: " + callDurCalc.calcOffPeakSeconds());
