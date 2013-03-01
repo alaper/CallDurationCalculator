@@ -56,7 +56,7 @@ public class CallDurationCalculator {
 		this.callEnd = callEnd;
 	}
 	
-	public int calcPeakSeconds()
+	public void calcPeakSeconds()
 	{
 	
 		peakSeconds += calcPeakSecondsForDay(false);
@@ -64,10 +64,14 @@ public class CallDurationCalculator {
 		if(multiDayCall() == true)
 			peakSeconds += calcPeakSecondsForDay(true);
 		
-		return peakSeconds;
-			
+					
 	}
 	
+	public void calculate()
+	{
+		calcPeakSeconds();
+		calcOffPeakSeconds();
+	}
 	
 	public int calcPeakSecondsForDay(boolean DayPlus)
 	{
@@ -102,16 +106,23 @@ public class CallDurationCalculator {
 		return false;
 	}
 	
-	public int calcOffPeakSeconds()
+	public void calcOffPeakSeconds()
 	{
 		offPeakSeconds = (int)(callTime.toDurationMillis()/1000) - peakSeconds;
 		
-		return offPeakSeconds;
+		
 		
 	}
 	
+	public int getPeakSeconds()
+	{
+		return peakSeconds;
+	}
 	
-	
+	public int getOffPeakSeconds()
+	{
+		return offPeakSeconds;
+	}
 	
 	private DateTime setNewLocalTime(DateTime aDateTime, LocalTime aTime)
 	{
