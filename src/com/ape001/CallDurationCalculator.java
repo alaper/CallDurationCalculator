@@ -8,15 +8,10 @@ public class CallDurationCalculator {
 	private LocalTime peakEnd;
 	private DateTime callStart;
 	private DateTime callEnd;
-	private Interval callInterval;
-	private Interval peakRateInterval;
-	private DateTime callPeakStart;
-	private DateTime callPeakEnd;
-	private long peakSeconds;
-	private long offPeakSeconds;
-	
-	
-	
+	private int peakSeconds;
+	private int offPeakSeconds;
+	private Interval callTime;
+		
 	public void setPeakStart(int hour, int minute)
 	{
 		peakStart = new LocalTime(hour, minute);
@@ -45,94 +40,75 @@ public class CallDurationCalculator {
 	public void setCallEnd(DateTime callEnd)
 	{
 		this.callEnd = callEnd;
-		setCallPeakStart();
-		setCallPeakEnd();
-		
 	}
 	
-	
-	private void calcSeconds()
+	public int calcPeakSeconds()
 	{
-		long Days;
+	
+		peakSeconds += calcPeakSecondsForDay(false);
 		
-		DateTime callStartDate = new DateTime(callStart.getYear(),callStart.getMonthOfYear(), callStart.getDayOfMonth(),0,0,0);
-		DateTime callEndDate = new DateTime(callEnd.getYear(), callEnd.getMonthOfYear(), callEnd.getDayOfMonth(),0,0,0);
+		if(multiDayCall() == true)
+			peakSeconds += calcPeakSecondsForDay(true);
 		
-		Days = new Interval(callStartDate, callEndDate).toDuration().getStandardDays();
-		
-		if(Days==0)
-		{
-			peakSeconds = calcPeakSeconds();
-			offPeakSeconds = calcOffPeakSeconds();
-		}
-		else
-		{
+		return peakSeconds;
 			
+	}
+	
+	
+	public int calcPeakSecondsForDay(boolean DayPlus)
+	{
+		DateTime peakStartDateTime;
+		DateTime peakEndDateTime;
+	
+		if(DayPlus == true)
+		{
+		peakStartDateTime = setNewLocalTime(callStart.plusDays(1), peakStart);
+		peakEndDateTime = setNewLocalTime(callStart.plusDays(1), peakEnd);
+		}else
+		{
+		peakStartDateTime = setNewLocalTime(callStart, peakStart);
+		peakEndDateTime = setNewLocalTime(callStart, peakEnd);	
 		}
 		
+		Interval peakTime = new Interval(peakStartDateTime, peakEndDateTime);
+		callTime = new Interval(callStart, callEnd);
 	
-		
-		
-	}
-	
-	public DateTime getCallStart()
-	{
-		return callStart;
-	}
-	
-	public DateTime getCallEnd()
-	{
-		
-		return callEnd;
-		
-	}
-	
-	private long calcPeakSeconds()
-	{
-		callInterval = new Interval(callStart, callEnd);
-		peakRateInterval = new Interval(callPeakStart, callPeakEnd);
-		
-		if(callInterval.overlap(peakRateInterval) == null)
-				return 0;
+		if(peakTime.overlap(callTime)==null)
+			{return 0;}
 		else
-			return callInterval.overlap(peakRateInterval).toDurationMillis()/1000;
+		{return (int)peakTime.overlap(callTime).toDurationMillis()/1000;}
+				
 	}
 	
-	public long calcOffPeakSeconds()
+	private boolean multiDayCall ()
 	{
-		callInterval = new Interval(callStart, callEnd);
-		return callInterval.toDurationMillis()/1000 - calcPeakSeconds();
+		if(callStart.getDayOfMonth() != callEnd.getDayOfMonth())
+			return true;
+		
+		return false;
 	}
 	
-	
-	private void setCallPeakStart()
+	public int calcOffPeakSeconds()
 	{
-		callPeakStart = new DateTime(callStart.getYear(), callStart.getMonthOfYear(), callStart.getDayOfMonth(),0,0,0);
-		callPeakStart = callPeakStart.plusSeconds(peakStart.getMillisOfDay()/1000);
+		offPeakSeconds = (int)(callTime.toDurationMillis()/1000) - peakSeconds;
+		
+		return offPeakSeconds;
+		
 	}
 	
-	private void setCallPeakEnd()
+	
+	
+	
+	private DateTime setNewLocalTime(DateTime aDateTime, LocalTime aTime)
 	{
-		callPeakEnd = new DateTime(callStart.getYear(), callStart.getMonthOfYear(), callStart.getDayOfMonth(),0,0,0);
-		callPeakEnd = callPeakEnd.plusSeconds(peakEnd.getMillisOfDay()/1000);
+		return new DateTime(aDateTime.getYear(), aDateTime.getMonthOfYear(), aDateTime.getDayOfMonth(), aTime.getHourOfDay(), aTime.getMinuteOfHour(),0);
 	}
 	
-	public DateTime getCallPeakStart()
-	{
-		return callPeakStart;
-	}
 	
-	public DateTime getCallPeakEnd()
-	{
-		return callPeakEnd;
-	}
 	
+		
 	public static void main(String[] args)
 	{
-		
-		long callDuration;
-		Interval callInterval;
-		Interval peakRateInterval;
 		
 		
 		CallDurationCalculator callDurCalc = new CallDurationCalculator();
@@ -140,18 +116,19 @@ public class CallDurationCalculator {
 		callDurCalc.setPeakStart(9, 0);
 		callDurCalc.setPeakEnd(17, 0);
 		
-		System.out.println(callDurCalc.getPeakStart());
-		
-		System.out.println(System.currentTimeMillis());
-		
-		callDurCalc.setCallStart(new DateTime(2013,02,10,8,0,0));
-		callDurCalc.setCallEnd(new DateTime(2013,02,10,19,40,0));
 			
-		System.out.println(callDurCalc.getCallPeakStart().toString());
-		System.out.println(callDurCalc.getCallPeakEnd().toString());
+		callDurCalc.setCallStart(new DateTime(2013,02,10,8,0,0));
+		callDurCalc.setCallEnd(new DateTime(2013,02,11,6,40,0));
 		
-		System.out.println("Peak seconds to charge:" + callDurCalc.getPeakSeconds());
-		System.out.println("Offpeak seconds to charge: " + callDurCalc.getOffPeakSeconds());
-	}
+		System.out.println("Peak Seconds: " + callDurCalc.calcPeakSeconds());
+		System.out.println("OffPeak Seconds: " + callDurCalc.calcOffPeakSeconds());
+			}
+	
+		
+		
+		
+		
+		
+
 	
 }
